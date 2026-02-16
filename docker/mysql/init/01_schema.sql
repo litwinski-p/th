@@ -1,0 +1,35 @@
+CREATE TABLE IF NOT EXISTS administrators (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    email VARCHAR(190) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS clients (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(190) NULL,
+    phone VARCHAR(50) NULL,
+    note TEXT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS movements (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    client_id INT UNSIGNED NOT NULL,
+    movement_type ENUM('earning', 'expense') NOT NULL,
+    amount DECIMAL(12, 2) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    moved_at DATE NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_movements_client_id
+        FOREIGN KEY (client_id)
+        REFERENCES clients (id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX idx_movements_client_id ON movements (client_id);
+CREATE INDEX idx_movements_moved_at ON movements (moved_at);

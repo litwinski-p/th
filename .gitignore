@@ -1,0 +1,17 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs and caches
+*.log
+.phpunit.result.cache
+
+# Editor/OS files
+.DS_Store
+.idea/
+.vscode/
