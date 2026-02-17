@@ -15,6 +15,7 @@ use Th\Core\Session;
 use Th\Core\View;
 use Th\Repository\AdminRepository;
 use Th\Repository\ClientRepository;
+use Th\Repository\LoginAttemptRepository;
 use Th\Repository\MovementRepository;
 
 $projectRoot = dirname(__DIR__);
@@ -42,8 +43,9 @@ try {
     $adminRepository = new AdminRepository($pdo);
     $clientRepository = new ClientRepository($pdo);
     $movementRepository = new MovementRepository($pdo);
+    $loginAttemptRepository = new LoginAttemptRepository($pdo);
 
-    $auth = new Auth($adminRepository);
+    $auth = new Auth($adminRepository, $loginAttemptRepository);
     $view = new View($projectRoot . '/src/View', $auth);
 
     $authController = new AuthController($view, $auth, $adminRepository);
@@ -83,6 +85,14 @@ try {
         $view->render('errors/not-found', ['title' => 'Not Found']);
     }
 } catch (Throwable $exception) {
+    error_log(sprintf(
+        '[%s] %s in %s:%d',
+        $exception::class,
+        $exception->getMessage(),
+        $exception->getFile(),
+        $exception->getLine()
+    ));
+    error_log($exception->getTraceAsString());
     http_response_code(500);
     echo 'An internal server error occurred.';
 }

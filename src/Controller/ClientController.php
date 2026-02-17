@@ -83,9 +83,9 @@ final class ClientController extends Controller
     {
         $this->requireAuth();
 
-        $clientId = (int) ($params['id'] ?? 0);
+        $clientId = $this->positiveIntParam($params, 'id');
 
-        if ($clientId < 1) {
+        if ($clientId === null) {
             $this->render('errors/not-found', ['title' => 'Not Found'], 404);
 
             return;

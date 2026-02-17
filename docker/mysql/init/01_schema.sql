@@ -31,5 +31,13 @@ CREATE TABLE IF NOT EXISTS movements (
         ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS login_attempts (
+    login_key VARCHAR(191) PRIMARY KEY,
+    attempts INT UNSIGNED NOT NULL DEFAULT 0,
+    lock_until DATETIME NULL,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE INDEX idx_movements_client_id ON movements (client_id);
 CREATE INDEX idx_movements_moved_at ON movements (moved_at);
+CREATE INDEX idx_login_attempts_lock_until ON login_attempts (lock_until);

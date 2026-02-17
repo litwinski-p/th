@@ -39,10 +39,28 @@ abstract class Controller
 
     protected function verifyCsrfOrFail(): void
     {
-        if (!Csrf::verify($_POST['_token'] ?? null)) {
+        $token = $_POST['_token'] ?? null;
+
+        if (!is_string($token) || !Csrf::verify($token)) {
             http_response_code(419);
             echo 'CSRF token mismatch. Refresh the page and try again.';
             exit;
         }
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
+    protected function positiveIntParam(array $params, string $key): ?int
+    {
+        $value = $params[$key] ?? null;
+
+        if (!is_string($value) || $value === '' || !ctype_digit($value)) {
+            return null;
+        }
+
+        $id = (int) $value;
+
+        return $id > 0 ? $id : null;
     }
 }

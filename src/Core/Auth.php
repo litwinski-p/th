@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Th\Core;
 
 use Th\Repository\Contracts\AdminRepositoryInterface;
+use Th\Repository\Contracts\LoginAttemptRepositoryInterface;
 
 final class Auth
 {
@@ -12,8 +13,10 @@ final class Auth
 
     private const LOCK_SECONDS = 300;
 
-    public function __construct(private AdminRepositoryInterface $adminRepository)
-    {
+    public function __construct(
+        private AdminRepositoryInterface $adminRepository,
+        private LoginAttemptRepositoryInterface $loginAttemptRepository
+    ) {
     }
 
     public function check(): bool
@@ -42,21 +45,21 @@ final class Auth
         return $this->adminRepository->findById($_SESSION['admin_id']);
     }
 
-    public function attempt(string $email, string $password): bool
+    public function attempt(string $email, string $password, string $throttleKey): bool
     {
-        if ($this->lockSecondsRemaining() > 0) {
+        if ($this->lockSecondsRemaining($throttleKey) > 0) {
             return false;
         }
 
         $admin = $this->adminRepository->findByEmail($email);
 
         if ($admin === null || !password_verify($password, (string) $admin['password_hash'])) {
-            $this->recordFailure();
+            $this->loginAttemptRepository->recordFailure($throttleKey, self::MAX_LOGIN_ATTEMPTS, self::LOCK_SECONDS);
 
             return false;
         }
 
-        $this->clearFailures();
+        $this->loginAttemptRepository->clear($throttleKey);
         session_regenerate_id(true);
         Csrf::regenerate();
 
@@ -70,7 +73,6 @@ final class Auth
         session_regenerate_id(true);
         Csrf::regenerate();
         $_SESSION['admin_id'] = $adminId;
-        $this->clearFailures();
     }
 
     public function logout(): void
@@ -85,37 +87,8 @@ final class Auth
         return $this->adminRepository->count() > 0;
     }
 
-    public function lockSecondsRemaining(): int
+    public function lockSecondsRemaining(string $throttleKey): int
     {
-        $lockUntil = $_SESSION['auth_lock_until'] ?? 0;
-
-        if (!is_int($lockUntil) || $lockUntil <= time()) {
-            return 0;
-        }
-
-        return $lockUntil - time();
-    }
-
-    private function recordFailure(): void
-    {
-        $attempts = $_SESSION['auth_attempts'] ?? 0;
-
-        if (!is_int($attempts)) {
-            $attempts = 0;
-        }
-
-        $attempts++;
-
-        $_SESSION['auth_attempts'] = $attempts;
-
-        if ($attempts >= self::MAX_LOGIN_ATTEMPTS) {
-            $_SESSION['auth_lock_until'] = time() + self::LOCK_SECONDS;
-            $_SESSION['auth_attempts'] = 0;
-        }
-    }
-
-    private function clearFailures(): void
-    {
-        unset($_SESSION['auth_attempts'], $_SESSION['auth_lock_until']);
+        return $this->loginAttemptRepository->lockSecondsRemaining($throttleKey);
     }
 }

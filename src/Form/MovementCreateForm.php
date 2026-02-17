@@ -10,6 +10,8 @@ final class MovementCreateForm
 {
     private array $errors = [];
 
+    private ?string $normalizedAmount = null;
+
     private function __construct(
         private string $movementType,
         private string $amountInput,
@@ -52,7 +54,7 @@ final class MovementCreateForm
 
     public function normalizedAmount(): string
     {
-        return number_format((float) $this->amountInput, 2, '.', '');
+        return $this->normalizedAmount ?? '0.00';
     }
 
     public function isValid(): bool
@@ -87,8 +89,12 @@ final class MovementCreateForm
             $this->errors['movement_type'] = 'Choose a valid movement type.';
         }
 
-        if (!is_numeric($this->amountInput) || (float) $this->amountInput <= 0) {
+        $normalizedAmount = $this->normalizeAmount($this->amountInput);
+
+        if ($normalizedAmount === null) {
             $this->errors['amount'] = 'Amount must be a number greater than zero.';
+        } else {
+            $this->normalizedAmount = $normalizedAmount;
         }
 
         if (mb_strlen($this->description) < 3 || mb_strlen($this->description) > 255) {
@@ -105,5 +111,28 @@ final class MovementCreateForm
         $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
 
         return $date !== false && $date->format('Y-m-d') === $value;
+    }
+
+    private function normalizeAmount(string $value): ?string
+    {
+        if (!preg_match('/^\d{1,10}(?:\.\d{1,2})?$/', $value)) {
+            return null;
+        }
+
+        $parts = explode('.', $value, 2);
+        $integerPart = ltrim($parts[0], '0');
+        $fractionPart = $parts[1] ?? '';
+
+        if ($integerPart === '') {
+            $integerPart = '0';
+        }
+
+        $fractionPart = str_pad($fractionPart, 2, '0');
+
+        if ($integerPart === '0' && $fractionPart === '00') {
+            return null;
+        }
+
+        return $integerPart . '.' . $fractionPart;
     }
 }

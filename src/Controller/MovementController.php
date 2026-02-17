@@ -30,9 +30,9 @@ final class MovementController extends Controller
         $this->requireAuth();
         $this->verifyCsrfOrFail();
 
-        $clientId = (int) ($params['id'] ?? 0);
+        $clientId = $this->positiveIntParam($params, 'id');
 
-        if (!$this->clientRepository->exists($clientId)) {
+        if ($clientId === null || !$this->clientRepository->exists($clientId)) {
             $this->render('errors/not-found', ['title' => 'Not Found'], 404);
 
             return;
