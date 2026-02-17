@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Th\Core\View;
+
 ?>
 <h1>Reports</h1>
 

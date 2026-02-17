@@ -25,7 +25,7 @@
     },
     "scripts": {
         "test": "phpunit",
-        "analyse": "phpstan analyse",
+        "analyse": "phpstan analyse --memory-limit=512M --debug src public",
         "format": "pint",
         "format:check": "pint --test"
     },

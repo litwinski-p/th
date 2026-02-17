@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Th\Controller;
 
-use DateTimeImmutable;
 use Th\Core\Auth;
 use Th\Core\View;
-use Th\Repository\ClientRepository;
-use Th\Repository\MovementRepository;
+use Th\Form\ReportFilterForm;
+use Th\Repository\Contracts\ClientRepositoryInterface;
+use Th\Repository\Contracts\MovementRepositoryInterface;
 
 final class ReportController extends Controller
 {
     public function __construct(
         View $view,
         Auth $auth,
-        private ClientRepository $clientRepository,
-        private MovementRepository $movementRepository
+        private ClientRepositoryInterface $clientRepository,
+        private MovementRepositoryInterface $movementRepository
     ) {
         parent::__construct($view, $auth);
     }
@@ -25,38 +25,12 @@ final class ReportController extends Controller
     {
         $this->requireAuth();
 
-        $clientIdInput = trim((string) ($_GET['client_id'] ?? ''));
-        $from = trim((string) ($_GET['from'] ?? ''));
-        $to = trim((string) ($_GET['to'] ?? ''));
+        $form = ReportFilterForm::fromArray($_GET);
+        $clientId = $form->clientId();
 
-        $clientId = null;
-        $errors = [];
-
-        if ($clientIdInput !== '') {
-            if (!ctype_digit($clientIdInput)) {
-                $errors['client_id'] = 'Client selection is invalid.';
-            } else {
-                $clientId = (int) $clientIdInput;
-                if (!$this->clientRepository->exists($clientId)) {
-                    $errors['client_id'] = 'Selected client was not found.';
-                }
-            }
+        if ($clientId !== null && !$this->clientRepository->exists($clientId)) {
+            $form->addError('client_id', 'Selected client was not found.');
         }
-
-        if ($from !== '' && !$this->isValidDate($from)) {
-            $errors['from'] = 'From date is invalid.';
-        }
-
-        if ($to !== '' && !$this->isValidDate($to)) {
-            $errors['to'] = 'To date is invalid.';
-        }
-
-        if ($from !== '' && $to !== '' && $from > $to) {
-            $errors['range'] = 'From date cannot be greater than to date.';
-        }
-
-        $normalizedFrom = $from === '' ? null : $from;
-        $normalizedTo = $to === '' ? null : $to;
 
         $movements = [];
         $totals = [
@@ -65,29 +39,18 @@ final class ReportController extends Controller
             'balance' => '0.00',
         ];
 
-        if ($errors === []) {
-            $movements = $this->movementRepository->report($clientId, $normalizedFrom, $normalizedTo);
-            $totals = $this->movementRepository->totals($clientId, $normalizedFrom, $normalizedTo);
+        if ($form->isValid()) {
+            $movements = $this->movementRepository->report($clientId, $form->fromDate(), $form->toDate());
+            $totals = $this->movementRepository->totals($clientId, $form->fromDate(), $form->toDate());
         }
 
         $this->render('reports/index', [
             'title' => 'Reports',
             'clients' => $this->clientRepository->allForSelect(),
-            'filters' => [
-                'client_id' => $clientIdInput,
-                'from' => $from,
-                'to' => $to,
-            ],
-            'errors' => $errors,
+            'filters' => $form->filters(),
+            'errors' => $form->errors(),
             'movements' => $movements,
             'totals' => $totals,
         ]);
-    }
-
-    private function isValidDate(string $value): bool
-    {
-        $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
-
-        return $date !== false && $date->format('Y-m-d') === $value;
     }
 }

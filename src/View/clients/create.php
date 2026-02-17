@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Th\Core\Csrf;
 use Th\Core\View;
+
 ?>
 <div class="actions" style="justify-content: space-between; margin-bottom: 1rem;">
     <h1 style="margin: 0;">Create Client</h1>

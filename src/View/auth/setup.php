@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Th\Core\Csrf;
 use Th\Core\View;
+
 ?>
 <div class="card" style="max-width: 560px; margin: 2rem auto;">
     <h1>Initial Administrator Setup</h1>

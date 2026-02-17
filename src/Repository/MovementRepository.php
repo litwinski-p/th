@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Th\Repository;
 
 use PDO;
+use Th\Repository\Contracts\MovementRepositoryInterface;
 
-final class MovementRepository
+final class MovementRepository implements MovementRepositoryInterface
 {
     public function __construct(private PDO $pdo)
     {

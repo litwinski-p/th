@@ -7,16 +7,17 @@ namespace Th\Controller;
 use Th\Core\Auth;
 use Th\Core\Flash;
 use Th\Core\View;
-use Th\Repository\ClientRepository;
-use Th\Repository\MovementRepository;
+use Th\Form\ClientCreateForm;
+use Th\Repository\Contracts\ClientRepositoryInterface;
+use Th\Repository\Contracts\MovementRepositoryInterface;
 
 final class ClientController extends Controller
 {
     public function __construct(
         View $view,
         Auth $auth,
-        private ClientRepository $clientRepository,
-        private MovementRepository $movementRepository
+        private ClientRepositoryInterface $clientRepository,
+        private MovementRepositoryInterface $movementRepository
     ) {
         parent::__construct($view, $auth);
     }
@@ -52,45 +53,24 @@ final class ClientController extends Controller
         $this->requireAuth();
         $this->verifyCsrfOrFail();
 
-        $fullName = trim((string) ($_POST['full_name'] ?? ''));
-        $email = $this->normalizeText($_POST['email'] ?? null);
-        $phone = $this->normalizeText($_POST['phone'] ?? null);
-        $note = $this->normalizeText($_POST['note'] ?? null);
+        $form = ClientCreateForm::fromArray($_POST);
 
-        $errors = [];
-
-        if (mb_strlen($fullName) < 2 || mb_strlen($fullName) > 150) {
-            $errors['full_name'] = 'Full name must be between 2 and 150 characters.';
-        }
-
-        if ($email !== null && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            $errors['email'] = 'Email is invalid.';
-        }
-
-        if ($phone !== null && mb_strlen($phone) > 50) {
-            $errors['phone'] = 'Phone cannot be longer than 50 characters.';
-        }
-
-        if ($note !== null && mb_strlen($note) > 2000) {
-            $errors['note'] = 'Note cannot be longer than 2000 characters.';
-        }
-
-        if ($errors !== []) {
+        if (!$form->isValid()) {
             $this->render('clients/create', [
                 'title' => 'Create Client',
-                'old' => [
-                    'full_name' => $fullName,
-                    'email' => $email ?? '',
-                    'phone' => $phone ?? '',
-                    'note' => $note ?? '',
-                ],
-                'errors' => $errors,
+                'old' => $form->old(),
+                'errors' => $form->errors(),
             ], 422);
 
             return;
         }
 
-        $clientId = $this->clientRepository->create($fullName, $email, $phone, $note);
+        $clientId = $this->clientRepository->create(
+            $form->fullName(),
+            $form->email(),
+            $form->phone(),
+            $form->note()
+        );
         Flash::set('success', 'Client created successfully.');
 
         $this->redirect('/clients/' . $clientId);

@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Th\Repository;
 
 use PDO;
+use Th\Repository\Contracts\ClientRepositoryInterface;
 
-final class ClientRepository
+final class ClientRepository implements ClientRepositoryInterface
 {
     public function __construct(private PDO $pdo)
     {

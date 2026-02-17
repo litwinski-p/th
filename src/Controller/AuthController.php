@@ -5,17 +5,18 @@ declare(strict_types=1);
 namespace Th\Controller;
 
 use Th\Core\Auth;
-use Th\Core\Csrf;
 use Th\Core\Flash;
 use Th\Core\View;
-use Th\Repository\AdminRepository;
+use Th\Form\AdminLoginForm;
+use Th\Form\AdminSetupForm;
+use Th\Repository\Contracts\AdminRepositoryInterface;
 
 final class AuthController extends Controller
 {
     public function __construct(
         View $view,
         Auth $auth,
-        private AdminRepository $adminRepository
+        private AdminRepositoryInterface $adminRepository
     ) {
         parent::__construct($view, $auth);
     }
@@ -46,32 +47,22 @@ final class AuthController extends Controller
 
         $this->verifyCsrfOrFail();
 
-        $email = mb_strtolower(trim((string) ($_POST['email'] ?? '')));
-        $password = (string) ($_POST['password'] ?? '');
+        $form = AdminLoginForm::fromArray($_POST);
 
-        $errors = [];
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Enter a valid email address.';
-        }
-
-        if ($password === '') {
-            $errors['password'] = 'Password is required.';
-        }
-
-        if ($errors !== []) {
+        if (!$form->isValid()) {
             $this->render('auth/login', [
                 'title' => 'Admin Login',
                 'lockSeconds' => $this->auth->lockSecondsRemaining(),
-                'old' => ['email' => $email],
-                'errors' => $errors,
+                'old' => $form->old(),
+                'errors' => $form->errors(),
             ], 422);
 
             return;
         }
 
-        if (!$this->auth->attempt($email, $password)) {
+        if (!$this->auth->attempt($form->email(), $form->password())) {
             $lockSeconds = $this->auth->lockSecondsRemaining();
+            $errors = $form->errors();
             $errors['credentials'] = $lockSeconds > 0
                 ? sprintf('Too many failed attempts. Try again in %d seconds.', $lockSeconds)
                 : 'Invalid credentials.';
@@ -79,7 +70,7 @@ final class AuthController extends Controller
             $this->render('auth/login', [
                 'title' => 'Admin Login',
                 'lockSeconds' => $lockSeconds,
-                'old' => ['email' => $email],
+                'old' => $form->old(),
                 'errors' => $errors,
             ], 401);
 
@@ -115,43 +106,23 @@ final class AuthController extends Controller
 
         $this->verifyCsrfOrFail();
 
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $email = mb_strtolower(trim((string) ($_POST['email'] ?? '')));
-        $password = (string) ($_POST['password'] ?? '');
-        $passwordConfirmation = (string) ($_POST['password_confirmation'] ?? '');
+        $form = AdminSetupForm::fromArray($_POST);
 
-        $errors = [];
-
-        if (mb_strlen($name) < 2 || mb_strlen($name) > 120) {
-            $errors['name'] = 'Name must be between 2 and 120 characters.';
-        }
-
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Enter a valid email address.';
-        }
-
-        if (!$this->isStrongPassword($password)) {
-            $errors['password'] = 'Password must have 12+ chars, upper/lowercase, number and symbol.';
-        }
-
-        if ($password !== $passwordConfirmation) {
-            $errors['password_confirmation'] = 'Password confirmation does not match.';
-        }
-
-        if ($errors !== []) {
+        if (!$form->isValid()) {
             $this->render('auth/setup', [
                 'title' => 'Initial Admin Setup',
-                'old' => [
-                    'name' => $name,
-                    'email' => $email,
-                ],
-                'errors' => $errors,
+                'old' => $form->old(),
+                'errors' => $form->errors(),
             ], 422);
 
             return;
         }
 
-        $adminId = $this->adminRepository->create($name, $email, password_hash($password, PASSWORD_DEFAULT));
+        $adminId = $this->adminRepository->create(
+            $form->name(),
+            $form->email(),
+            password_hash($form->password(), PASSWORD_DEFAULT)
+        );
         $this->auth->loginById($adminId);
 
         Flash::set('success', 'Administrator account created.');
@@ -168,17 +139,5 @@ final class AuthController extends Controller
         Flash::set('success', 'Signed out successfully.');
 
         $this->redirect('/login');
-    }
-
-    private function isStrongPassword(string $password): bool
-    {
-        if (mb_strlen($password) < 12) {
-            return false;
-        }
-
-        return preg_match('/[A-Z]/', $password) === 1
-            && preg_match('/[a-z]/', $password) === 1
-            && preg_match('/\d/', $password) === 1
-            && preg_match('/[^a-zA-Z\d]/', $password) === 1;
     }
 }

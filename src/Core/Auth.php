@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Th\Core;
 
-use Th\Repository\AdminRepository;
+use Th\Repository\Contracts\AdminRepositoryInterface;
 
 final class Auth
 {
@@ -12,7 +12,7 @@ final class Auth
 
     private const LOCK_SECONDS = 300;
 
-    public function __construct(private AdminRepository $adminRepository)
+    public function __construct(private AdminRepositoryInterface $adminRepository)
     {
     }
 

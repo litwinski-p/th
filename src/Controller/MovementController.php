@@ -7,16 +7,17 @@ namespace Th\Controller;
 use Th\Core\Auth;
 use Th\Core\Flash;
 use Th\Core\View;
-use Th\Repository\ClientRepository;
-use Th\Repository\MovementRepository;
+use Th\Form\MovementCreateForm;
+use Th\Repository\Contracts\ClientRepositoryInterface;
+use Th\Repository\Contracts\MovementRepositoryInterface;
 
 final class MovementController extends Controller
 {
     public function __construct(
         View $view,
         Auth $auth,
-        private ClientRepository $clientRepository,
-        private MovementRepository $movementRepository
+        private ClientRepositoryInterface $clientRepository,
+        private MovementRepositoryInterface $movementRepository
     ) {
         parent::__construct($view, $auth);
     }
@@ -37,30 +38,9 @@ final class MovementController extends Controller
             return;
         }
 
-        $movementType = trim((string) ($_POST['movement_type'] ?? ''));
-        $amountInput = trim((string) ($_POST['amount'] ?? ''));
-        $description = trim((string) ($_POST['description'] ?? ''));
-        $movedAt = trim((string) ($_POST['moved_at'] ?? ''));
+        $form = MovementCreateForm::fromArray($_POST);
 
-        $errors = [];
-
-        if (!in_array($movementType, ['earning', 'expense'], true)) {
-            $errors['movement_type'] = 'Choose a valid movement type.';
-        }
-
-        if (!is_numeric($amountInput) || (float) $amountInput <= 0) {
-            $errors['amount'] = 'Amount must be a number greater than zero.';
-        }
-
-        if (mb_strlen($description) < 3 || mb_strlen($description) > 255) {
-            $errors['description'] = 'Description must be between 3 and 255 characters.';
-        }
-
-        if (!$this->isValidDate($movedAt)) {
-            $errors['moved_at'] = 'Date must be in YYYY-MM-DD format.';
-        }
-
-        if ($errors !== []) {
+        if (!$form->isValid()) {
             $client = $this->clientRepository->findById($clientId);
 
             if ($client === null) {
@@ -74,30 +54,22 @@ final class MovementController extends Controller
                 'client' => $client,
                 'movements' => $this->movementRepository->forClient($clientId),
                 'totals' => $this->movementRepository->totals($clientId),
-                'errors' => $errors,
-                'oldMovement' => [
-                    'movement_type' => $movementType,
-                    'amount' => $amountInput,
-                    'description' => $description,
-                    'moved_at' => $movedAt,
-                ],
+                'errors' => $form->errors(),
+                'oldMovement' => $form->old(),
             ], 422);
 
             return;
         }
 
-        $normalizedAmount = number_format((float) $amountInput, 2, '.', '');
-
-        $this->movementRepository->create($clientId, $movementType, $normalizedAmount, $description, $movedAt);
+        $this->movementRepository->create(
+            $clientId,
+            $form->movementType(),
+            $form->normalizedAmount(),
+            $form->description(),
+            $form->movedAt()
+        );
         Flash::set('success', 'Movement added successfully.');
 
         $this->redirect('/clients/' . $clientId);
-    }
-
-    private function isValidDate(string $value): bool
-    {
-        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
-
-        return $date !== false && $date->format('Y-m-d') === $value;
     }
 }

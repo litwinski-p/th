@@ -6,16 +6,16 @@ namespace Th\Controller;
 
 use Th\Core\Auth;
 use Th\Core\View;
-use Th\Repository\ClientRepository;
-use Th\Repository\MovementRepository;
+use Th\Repository\Contracts\ClientRepositoryInterface;
+use Th\Repository\Contracts\MovementRepositoryInterface;
 
 final class DashboardController extends Controller
 {
     public function __construct(
         View $view,
         Auth $auth,
-        private ClientRepository $clientRepository,
-        private MovementRepository $movementRepository
+        private ClientRepositoryInterface $clientRepository,
+        private MovementRepositoryInterface $movementRepository
     ) {
         parent::__construct($view, $auth);
     }

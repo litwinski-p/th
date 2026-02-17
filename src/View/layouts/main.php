@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Th\Core\Csrf;
 use Th\Core\View;
+
 ?>
 <!doctype html>
 <html lang="en">

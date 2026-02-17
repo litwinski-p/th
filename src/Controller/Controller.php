@@ -45,15 +45,4 @@ abstract class Controller
             exit;
         }
     }
-
-    protected function normalizeText(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $trimmed = trim($value);
-
-        return $trimmed === '' ? null : $trimmed;
-    }
 }
