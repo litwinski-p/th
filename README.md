@@ -8,6 +8,7 @@ For purpose of this technical assignment I implemented basic security measures l
 - CSRF protection with per-session token generation + verification
 - SQL injection protection using prepared PDO statements across repositories
 - Output escaping (XSS protection)
+- Persistent login throttling/lockout
 
 In production environement the application should also have the following features:
 - Should be served via HTTPS
