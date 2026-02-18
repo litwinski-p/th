@@ -9,9 +9,9 @@ use Th\Repository\Contracts\LoginAttemptRepositoryInterface;
 
 final class Auth
 {
-    private const MAX_LOGIN_ATTEMPTS = 5;
+    private const int MAX_LOGIN_ATTEMPTS = 5;
 
-    private const LOCK_SECONDS = 300;
+    private const int LOCK_SECONDS = 300;
 
     public function __construct(
         private AdminRepositoryInterface $adminRepository,

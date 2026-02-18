@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Th\Core;
 
 use Closure;
+use ReflectionException;
 use ReflectionFunction;
 
 final class Router
@@ -81,6 +82,7 @@ final class Router
 
     /**
      * @param array<string, string> $params
+     * @throws ReflectionException
      */
     private function invokeHandler(callable $handler, array $params): void
     {

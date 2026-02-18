@@ -11,6 +11,7 @@ Simple PHP 8.5 MVC application (custom backend, MySQL, Docker Compose).
   - `3306` (MySQL)
 
 ### Important note
+
 The application was built and successfully ran using:
 - Docker version 29.2.0
 - Docker Compose version v5.0.2
