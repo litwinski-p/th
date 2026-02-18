@@ -1,16 +1,28 @@
-# Technical Task for ThinkHuge
+# Technical assignment for ThinkHuge
 
 Simple PHP 8.5 MVC application (custom backend, MySQL, Docker Compose).
+For purpose of this technical assignment I implemented basic security measures like for example:
+- Password hashing
+- Protecting routes by authentication gate
+- Secure session cookie settings (HttpOnly, SameSite=Lax, Secure when HTTPS is available)
+- CSRF protection with per-session token generation + verification
+- SQL injection protection using prepared PDO statements across repositories
+- Output escaping (XSS protection)
+
+In production environement the application should also have the following features:
+- Should be served via HTTPS
+- Multi-Factor Authentication
+- Password reset flow
 
 ## Requirements
 
 - Docker
-- Docker Compose v2
+- Docker Compose
 - Free ports:
   - `8080` (application)
   - `3306` (MySQL)
 
-### Important note
+### Important:
 
 The application was built and successfully ran using:
 - Docker version 29.2.0
