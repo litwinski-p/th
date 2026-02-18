@@ -31,34 +31,33 @@ The application was built and successfully ran using:
 ## Run Locally
 
 1. Clone the repository.
+
+```bash
+git clone https://github.com/litwinski-p/th.git
+```
+
 2. Create environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Set a secure setup token in `.env`:
-
-```env
-APP_SETUP_TOKEN=your-long-random-secret
-```
-
-4. Build and start containers:
+3. Build and start containers:
 
 ```bash
 docker compose up --build
 ```
 
-5. Open the app:
+4. Open the app:
 
 ```text
 http://localhost:8080
 ```
 
-6. Create first administrator account (initial setup):
+5. Create first administrator account (initial setup) using APP_SETUP_TOKEN from the .env file:
 
 ```text
-http://localhost:8080/setup?token=YOUR_APP_SETUP_TOKEN
+http://localhost:8080/setup?token=APP_SETUP_TOKEN
 ```
 
 ## Useful Commands
