@@ -236,7 +236,7 @@ use Th\Core\View;
                 <a href="/reports">Reports</a>
             </div>
             <div class="actions">
-                <span class="text-muted">Signed in as <?= View::escape((string) $currentAdmin['email']) ?></span>
+                <span class="text-muted">Signed in as <?= View::escape((string) $currentAdmin['name']) ?></span>
                 <form class="inline-form" method="post" action="/logout">
                     <input type="hidden" name="_token" value="<?= View::escape(Csrf::token()) ?>">
                     <button class="btn btn-secondary" type="submit">Logout</button>
