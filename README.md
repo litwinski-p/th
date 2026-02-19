@@ -14,6 +14,7 @@ In production environement the application should also have the following featur
 - Should be served via HTTPS
 - Multi-Factor Authentication
 - Password reset flow
+- Secure and centralized secrets management
 
 ## Requirements
 
